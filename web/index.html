@@ -366,7 +366,6 @@
   </aside>
 
   <script>
-    // Same 16 scorers as backend — used for rewrite model dropdown
     const SCORERS = [
       { id: 'cw-eugene-schwartz', name: 'Eugene Schwartz' },
       { id: 'cw-david-ogilvy', name: 'David Ogilvy' },
@@ -408,11 +407,6 @@
     const originalContent = document.getElementById('originalContent');
     const revisedContent = document.getElementById('revisedContent');
     const closeCompare = document.getElementById('closeCompare');
-
-    // Populate rewrite model dropdown
-    rewriteModelSelect.innerHTML = SCORERS.map((s) =>
-      `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`
-    ).join('');
 
     let lastResults = [];
     let lastCopy = '';
@@ -484,6 +478,10 @@
       div.textContent = s;
       return div.innerHTML;
     }
+
+    rewriteModelSelect.innerHTML = SCORERS.map((s) =>
+      `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`
+    ).join('');
 
     function openPanel(r) {
       panelType.textContent = r.type.toUpperCase();

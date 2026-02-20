@@ -309,6 +309,18 @@
       word-break: break-word;
     }
     .compare-content .hl { background: var(--highlight); }
+    .rewrite-notice {
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .rewrite-notice-warn {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+    }
     .loading { opacity: .7; pointer-events: none; }
     .error {
       background: #fef2f2;
@@ -366,6 +378,7 @@
         </div>
         <div class="compare-col">
           <h4>Revised</h4>
+          <div class="rewrite-notice" id="rewriteNotice" style="display: none;"></div>
           <div class="compare-content" id="revisedContent"></div>
         </div>
       </div>
@@ -422,6 +435,7 @@
     const compareSection = document.getElementById('compareSection');
     const originalContent = document.getElementById('originalContent');
     const revisedContent = document.getElementById('revisedContent');
+    const rewriteNotice = document.getElementById('rewriteNotice');
     const closeCompare = document.getElementById('closeCompare');
 
     // Populate rewrite model dropdown
@@ -611,10 +625,17 @@
           body: JSON.stringify({ copy, scorer_id: scorerId }),
         });
         if (!res.ok) throw new Error(res.statusText || 'Rewrite failed');
-        const { revised, scorer_name } = await res.json();
+        const { revised, scorer_name, llm_used, summary } = await res.json();
         const ranges = getDiffRanges(copy, revised);
         originalContent.textContent = copy;
         revisedContent.innerHTML = renderHighlighted(revised, ranges);
+        if (llm_used === false && summary) {
+          rewriteNotice.textContent = summary;
+          rewriteNotice.style.display = 'block';
+          rewriteNotice.className = 'rewrite-notice rewrite-notice-warn';
+        } else {
+          rewriteNotice.style.display = 'none';
+        }
         compareTitle.textContent = scorer_name
           ? `Original vs Revised by ${scorer_name} (highlighted = changed)`
           : 'Original vs Revised (highlighted = changed)';

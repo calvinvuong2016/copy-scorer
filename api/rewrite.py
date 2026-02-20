@@ -257,6 +257,35 @@ ORIGINAL COPY:
         summary = (data.get("summary") or "").strip() or SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
         if not revised:
             return None, None, False
+        # If opening unchanged, retry once with stricter instruction
+        def first_line(s):
+            return (s or "").strip().split("\n")[0].strip()[:120]
+        if first_line(revised) == first_line(copy_text):
+            retry_user = f"""Your previous response was invalid: the opening was unchanged. You MUST output a COMPLETE REPLACEMENT. Your first sentence must be DIFFERENT from the original. Rewrite the entire ad from the top in your voice. Return only JSON: {{"revised": "<full revised ad>", "summary": "<one short sentence>"}}.
+
+ORIGINAL COPY:
+{copy_text}"""
+            try:
+                msg2 = client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=4096,
+                    system=system,
+                    messages=[{"role": "user", "content": retry_user}],
+                )
+                text2 = ""
+                for block in getattr(msg2, "content", []):
+                    if getattr(block, "type", None) == "text":
+                        text2 += getattr(block, "text", "") or ""
+                text2 = text2.strip()
+                if text2.startswith("```"):
+                    text2 = re.sub(r"^```(?:json)?\s*", "", text2)
+                    text2 = re.sub(r"\s*```$", "", text2)
+                data2 = json.loads(text2)
+                revised2 = (data2.get("revised") or "").strip()
+                if revised2 and first_line(revised2) != first_line(copy_text):
+                    revised, summary = revised2, (data2.get("summary") or summary or "").strip()
+            except Exception:
+                pass
         return revised, summary, True
     except Exception:
         return None, None, False
@@ -267,8 +296,9 @@ def rewrite_by_model(copy_text, scorer_id):
     name = next((n for sid, n, _ in SCORERS if sid == scorer_id), "Eugene Schwartz")
     revised, summary, llm_used = _rewrite_via_claude(copy_text, scorer_id, name)
     if not llm_used:
-        revised = _rewrite_by_model(copy_text, scorer_id)
-        summary = SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
+        # No template fallback: return original so user sees they need API key
+        revised = copy_text
+        summary = "Claude rewrite unavailable. Set ANTHROPIC_API_KEY in Vercel (Project → Settings → Environment Variables) or in .env locally for per-writer rewrites."
     return {
         "revised": revised,
         "summary": summary,

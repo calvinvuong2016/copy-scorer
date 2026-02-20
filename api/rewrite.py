@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from http.server import BaseHTTPRequestHandler
 
@@ -42,67 +43,226 @@ SCORER_SUMMARIES = {
 }
 
 
-def _base_rewrite(text):
-    """Shared structural edits (bullets, risk reversal, P.S.)."""
+# Per-model injected block: (intro_line, bullet_block, closer_line, ps_line, pps_line)
+# Each model gets a visibly different middle section so rewrites don't all look the same.
+_MODEL_BLOCKS = {
+    "cw-eugene-schwartz": (
+        "Here's what you get when you click the link below. Same mechanism the dermatology office uses:\n\n",
+        "• The 5 brands and why the office stands behind them\n• What each does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No subscription. No auto-ship. No cost. Just the list. I'm not sure how long they keep the page up, but it's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. It's free and there's nothing to sign up for.",
+    ),
+    "cw-david-ogilvy": (
+        "Click the link below. You get one page—research-backed, no fluff:\n\n",
+        "• The 5 brands by name\n• What each does (fine lines, sagging, dark spots)\n• Where to buy without the markup\n• Why the doctors give these to their wives\n• The ingredient that appears in four of the five\n\n",
+        "No signup. No cost. No subscription. The page is live now.\n\n",
+        "P.S. Link below.\n\n",
+        "P.P.S. I don't know how long they keep it up.",
+    ),
+    "cw-gary-halbert": (
+        "Nina sent this to a dozen women. Here's what they get when they click the link:\n\n",
+        "• The 5 brands the dermatology office actually recommends\n• What each one does for lines, sagging, spots\n• Where to get them (no markup)\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No subscription. No auto-ship. No cost. Just the list. It's there now.\n\n",
+        "P.S. Nina's sent this to a dozen women. Every one thanked her. The link's below if you want it.\n\n",
+        "P.P.S. Free. Nothing to sign up for.",
+    ),
+    "cw-joe-sugarman": (
+        "Click the link. The first thing you see is what you get:\n\n",
+        "• The 5 brands and why the office stands behind them\n• What each does for fine lines, sagging, and dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No subscription. No cost. Just the list. Page is live now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "cw-gary-bencivenga": (
+        "When you click the link you get a free page. No risk:\n\n",
+        "• The 5 brands—and why the dermatology office stands behind them\n• What each one does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient that showed up in four of the five\n\n",
+        "No subscription. No auto-ship. No cost. Just the list. (Risk reversed.) It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. Nothing to sign up for.",
+    ),
+    "cw-dan-kennedy": (
+        "If you want the list, the link's below. Here's what you get:\n\n",
+        "• The 5 brands and why the office stands behind them\n• What each does for lines, sagging, spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No subscription. No auto-ship. No cost. I'm not sure how long they keep the page up—so if you want it, the link's below.\n\n",
+        "P.S. Link below. No fluff.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "cw-john-carlton": (
+        "Big promise: the 5 brands that actually smooth lines, firm skin, fade spots. One link. Here's what's on the page:\n\n",
+        "• The 5 brands and why the dermatology office stands behind them\n• What each one does for fine lines, sagging, and dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No commitment. No subscription. No cost. Just the list. Control: one link below. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. Nothing to sign up for.",
+    ),
+    "cw-clayton-makepeace": (
+        "Click the link. You get benefit, mechanism, intrigue:\n\n",
+        "• The 5 brands (benefit)\n• Why the dermatology office stands behind them (mechanism)\n• What each does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• The one ingredient in four of the five (intrigue)\n\n",
+        "No subscription. No cost. Just the list. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "cw-bob-bly": (
+        "Facts. Click the link and you get:\n\n",
+        "• The 5 brands by name\n• What each does (fine lines, sagging, dark spots)\n• Where to get them (no markup)\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No signup. No cost. No subscription. Clear CTA: link below. Page is live now.\n\n",
+        "P.S. Link below.\n\n",
+        "P.P.S. Free. Nothing to sign up for.",
+    ),
+    "cw-claude-hopkins": (
+        "Specific offer. Click the link for:\n\n",
+        "• The 5 brand names\n• What each does for skin over 45 (fine lines, sagging, dark spots)\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "Free. No signup. No subscription. Test-ready. Page is there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "book-cashvertising": (
+        "Life-Force 8: what you get when you click (social approval, comfort):\n\n",
+        "• The 5 brands—see what the dermatology office stands behind\n• What each does for fine lines, sagging, dark spots (sensory results)\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No cost. No signup. Just the list. Link below. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "book-breakthrough-advertising": (
+        "One mass desire: look like yourself again. The page gives you:\n\n",
+        "• The 5 brands (headline doesn't mention product)\n• Why the office stands behind them\n• What each does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• The one ingredient in four of the five\n\n",
+        "No subscription. No cost. Just the list. Link below. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "book-scientific-advertising": (
+        "Specific offer. Preemptive: what the doctors give their wives. Click the link for:\n\n",
+        "• The 5 brands by name\n• What each does (fine lines, sagging, dark spots)\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "Free. No signup. No subscription. Test-ready. Page is there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "book-influence-cialdini": (
+        "Social proof: Nina. Authority: dermatology office. What you get when you click:\n\n",
+        "• The 5 brands and why the office stands behind them\n• What each does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No cost. No signup. Just the list. Link below. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "book-ogilvy-on-advertising": (
+        "Headline does the work. Credibility: same list the office uses. Click the link for:\n\n",
+        "• The 5 brands and what each does (fine lines, sagging, dark spots)\n• Where to get them without the markup\n• Why the dermatology office stands behind them\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No signup. No cost. Page is there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+    "meta-score": (
+        "Clear CTA. No aggressive caps. What you get when you click:\n\n",
+        "• The 5 brands and why the office stands behind them\n• What each does for fine lines, sagging, dark spots\n• Where to get them without the markup\n• Why the doctors give these to their wives\n• The one ingredient in four of the five\n\n",
+        "No subscription. No cost. Just the list. Free. Link below. No engagement bait. It's there now.\n\n",
+        "P.S. The link's below if you want it.\n\n",
+        "P.P.S. Free. No signup.",
+    ),
+}
+
+
+def _rewrite_by_model(text, scorer_id):
+    """Build revised copy using this model's intro, bullets, closer, and P.S. (template fallback)."""
     t = text.strip()
+    block = _MODEL_BLOCKS.get(scorer_id, _MODEL_BLOCKS["cw-eugene-schwartz"])
+    intro, bullets, closer, ps, pps = block
     if "God Bless" in t or "god bless" in t.lower():
-        inject = (
-            "\n\nHere's what you get when you click the link below... nothing fancy. Just a free page that shows:\n\n"
-            "• The 5 brands and why the dermatology office stands behind them\n"
-            "• What each one does for fine lines, sagging, and dark spots\n"
-            "• Where to get them without the markup\n"
-            "• Why the doctors give these to their wives\n"
-            "• The one ingredient that showed up in four of the five\n\n"
-            "No subscription. No auto-ship. No cost. Just the list. "
-            "I'm not sure how long they keep the page up, but it's there now.\n\n"
-        )
-        t = re.sub(r"\s*God Bless.*$", inject + "God Bless ♥️", t, flags=re.I | re.DOTALL)
+        inject = "\n\n" + intro + bullets + closer + "God Bless ♥️\n\n"
+        t = re.sub(r"\s*God Bless.*$", inject, t, flags=re.I | re.DOTALL)
     else:
-        t += (
-            "\n\nNo subscription. No auto-ship. No cost. Just the list. "
-            "I'm not sure how long they keep the page up, but it's there now.\n\n"
-        )
+        t += "\n\n" + intro + bullets + closer
     if "P.S." not in t and "P.P.S." not in t:
-        t += (
-            "\n\nP.S. The link's below if you want it.\n\n"
-            "P.P.S. I don't know how long they keep that page live. It's free and there's nothing to sign up for."
-        )
+        t += "\n\n" + ps + "\n\n" + pps
     return t.strip()
 
 
-def _model_specific_addon(scorer_id, text):
-    """Return a short model-specific addition to append or inject (so each model changes something different)."""
-    already_has_ps = "P.S." in text or "P.P.S." in text
-    addons = {
-        "cw-eugene-schwartz": "\n\nThe five brands use the same ingredients the dermatology office actually recommends—that's the mechanism that makes this work.",
-        "cw-david-ogilvy": "\n\nHeadline does the work; the rest is proof and clarity. What you get: the 5 brands, what each does, and where to get them—no signup.",
-        "cw-gary-halbert": "\n\nP.S. Nina's sent this to a dozen women. Every one has thanked her. The link's below if you want it." if not already_has_ps else "",
-        "cw-joe-sugarman": "\n\nThe first sentence pulls you in; the rest keeps you reading. No subscription. No cost. Just the list.",
-        "cw-gary-bencivenga": "\n\nNo subscription. No auto-ship. No cost. Just the list. (Risk reversed.)",
-        "cw-dan-kennedy": "\n\nI'm not sure how long they keep the page up—so if you want the list, the link's below. No fluff.",
-        "cw-john-carlton": "\n\nBig promise: see the 5 brands that actually smooth lines, firm skin, and fade spots. Control: one link below. No commitment.",
-        "cw-clayton-makepeace": "\n\n• The 5 brands (benefit)\n• Why the dermatology office stands behind them (mechanism)\n• The one ingredient in four of the five (intrigue)\n\nNo subscription. No cost. Just the list.",
-        "cw-bob-bly": "\n\nFacts: 5 brands, what each does, where to get them. No signup. No cost. Clear CTA: link below.",
-        "cw-claude-hopkins": "\n\nSpecific offer: the 5 brand names, what each does for skin over 45, and where to get them. Free. No signup. Test-ready.",
-        "book-cashvertising": "\n\nLife-Force 8: social approval and comfort. What you get: the 5 brands, sensory results, no cost. Link below.",
-        "book-breakthrough-advertising": "\n\nOne mass desire (looking like yourself again). Headline doesn't mention product. What you get: the 5 brands, clear. Link below.",
-        "book-scientific-advertising": "\n\nSpecific offer: 5 brands, what each does, where to get them. Free. No signup. Preemptive: what the doctors give their wives.",
-        "book-influence-cialdini": "\n\nSocial proof: Nina, dozen women. Authority: dermatology office. What you get: the list. No cost. Link below.",
-        "book-ogilvy-on-advertising": "\n\nHeadline does the work. What you get: the 5 brands, what each does, where to get them. No signup. Credibility: same list the office uses.",
-        "meta-score": "\n\nAlgorithm-friendly: clear CTA, no aggressive caps. What you get: the 5 brands, free. Link below. No engagement bait.",
-    }
-    return addons.get(scorer_id, "")
+def _skills_dir():
+    """Directory containing scorer framework .md files (api/skills)."""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "skills")
+
+
+def _load_skill_prompt(scorer_id):
+    """Load framework content from api/skills/{scorer_id}.md. Return None if not found."""
+    path = os.path.join(_skills_dir(), scorer_id + ".md")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except OSError:
+        return None
+
+
+_REWRITE_SYSTEM_PREFIX = """You are rewriting copy in the style of the copywriter whose framework is below. Two non-negotiable rules:
+
+1) CHANGES MUST START AT THE TOP. Do not leave the opening and middle mostly unchanged and then add or change stuff at the end. The FIRST sentence must be rewritten in this copywriter's voice. The opening paragraph must be rewritten. The middle rephrased and restructured. The close in their style. Spread the rewrite from top to bottom — if the only big changes are near the end, you have failed.
+
+2) DO NOT PUT THE FRAMEWORK INTO THE AD. The text below describes the copywriter's methodology (scoring criteria, techniques, how they think about copy). It is instructions FOR YOU, not text to include in the rewrite. Your revised copy must be a normal ad for the product/offer only. Do not quote or paraphrase the framework. Do not add sentences that explain copywriting concepts (e.g. "awareness stage," "mechanism," "benefit + intrigue"), reference the copywriter or their book by name, or insert scoring-criteria language. The reader should see only selling copy — no meta-commentary or teaching points from the framework.
+
+Other rules:
+- Apply this copywriter's signature techniques (opening style, rhythm, bullets, P.S., length) throughout so the ad reads as if they wrote it. You may add new persuasive content that fits the offer.
+- Natural, conversational language. 3rd–5th grade reading level. No AI patterns (no triplets, no "not just X but Y").
+- Output valid JSON only: {"revised": "<full revised copy>", "summary": "<one sentence>"}. "revised" = complete rewrite with newlines as \\n. "summary" = one short sentence.
+
+Framework for this copywriter (use it to guide your style and structure only — do not echo it in the ad):
+"""
+
+
+def _rewrite_via_claude(copy_text, scorer_id, scorer_name):
+    """Call Claude to rewrite copy using the scorer's framework. Returns (revised, summary, True) on success, or (None, None, False) on failure."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key or not api_key.strip():
+        return None, None, False
+    framework = _load_skill_prompt(scorer_id)
+    if not framework:
+        return None, None, False
+    try:
+        import anthropic
+    except ImportError:
+        return None, None, False
+    system = _REWRITE_SYSTEM_PREFIX + framework
+    user = f"""Rewrite the following copy as {scorer_name} would write it. Start by rewriting the FIRST sentence and opening, then the middle, then the close. Do not leave the top unchanged and only edit the end. The output must be a normal ad only — do not insert any text that comes from the copywriter's methodology or framework (no scoring terms, no "how to write" ideas, no references to the copywriter or their book). Output only valid JSON with keys "revised" and "summary".
+
+{copy_text}"""
+    try:
+        client = anthropic.Anthropic(api_key=api_key.strip())
+        msg = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=4096,
+            system=system,
+            messages=[{"role": "user", "content": user}],
+        )
+        text = ""
+        for block in getattr(msg, "content", []):
+            if getattr(block, "type", None) == "text":
+                text += getattr(block, "text", "") or ""
+        text = text.strip()
+        # Strip markdown code fence if present
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
+        data = json.loads(text)
+        revised = (data.get("revised") or "").strip()
+        summary = (data.get("summary") or "").strip() or SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
+        if not revised:
+            return None, None, False
+        return revised, summary, True
+    except Exception:
+        return None, None, False
 
 
 def rewrite_by_model(copy_text, scorer_id):
     scorer_id = (scorer_id or "").strip() or "cw-eugene-schwartz"
     name = next((n for sid, n, _ in SCORERS if sid == scorer_id), "Eugene Schwartz")
-    revised = _base_rewrite(copy_text)
-    addon = _model_specific_addon(scorer_id, revised)
-    if addon:
-        revised = (revised.rstrip() + addon).strip()
-    summary = SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
-    return {"revised": revised, "summary": summary, "scorer_id": scorer_id, "scorer_name": name}
+    revised, summary, llm_used = _rewrite_via_claude(copy_text, scorer_id, name)
+    if not llm_used:
+        revised = _rewrite_by_model(copy_text, scorer_id)
+        summary = SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
+    return {
+        "revised": revised,
+        "summary": summary,
+        "scorer_id": scorer_id,
+        "scorer_name": name,
+        "llm_used": llm_used,
+    }
 
 
 class handler(BaseHTTPRequestHandler):

@@ -1,0 +1,13 @@
+# API keys and secrets
+Data/.env
+*.env
+
+# Windows reserved name (causes "invalid path 'nul'" on git add)
+nul
+NUL
+**/nul
+**/NUL
+
+# Python
+__pycache__/
+*.pyc

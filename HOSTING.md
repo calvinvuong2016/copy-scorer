@@ -15,6 +15,8 @@ You can host on **Vercel** or **Render**. No commands to run—just connect the 
 
 No build or start commands needed. The `api/` folder runs as serverless functions; `public/index.html` is served at the root.
 
+**Rewrite with Claude:** To use framework-driven rewrites (not the template fallback), set **`ANTHROPIC_API_KEY`** in the project: **Settings → Environment Variables** → add `ANTHROPIC_API_KEY` with your key → redeploy. (Local runs use the `.env` file in the project root.)
+
 ---
 
 ## Option B: Render

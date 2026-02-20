@@ -1,0 +1,105 @@
+================================================================================
+SCORING REPORT — LONG STORY AD (ALL SCORERS)
+================================================================================
+Ad: "My New Date Called Me 'Old'" — Long-form narrative, skincare/5 brands CTA
+Request: Scores only (1–100), brief rationale per scorer. No edits.
+================================================================================
+
+----------------------------------------
+[CW] COPYWRITER SCORERS (10)
+----------------------------------------
+
+cw-eugene-schwartz — 81
+Summary: Copy targets problem-aware to solution-aware women (invisible, post-divorce, failed treatments). Mass desire (being seen, confidence) is clearly channeled. Mechanism is present ("what the actual doctors are giving their wives," "5 brands") but could be sharper. Headline/opening fit the stage; length is justified. Minor deduction for mechanism specificity.
+
+cw-david-ogilvy — 85
+Summary: Headline does heavy lifting and compels the next sentence. Copy is research-driven with specific details (23 years married, Olive Garden, $2,000, Nina 56, daughter, Michael). Clear benefit (confidence, skin, feeling seen). Credibility from Nina, dermatology office, and doctors' wives. Opening carries the headline. Strong overall.
+
+cw-gary-halbert — 82
+Summary: Speaks to one reader; borrowed interest is strong (story pulls immediately). Story is specific (Greg, Michael, Nina, daughter) with tension and transformation. Conversational voice. P.S. is underused—"God Bless ♥️" doesn't restate offer or key benefit like Halbert would. Otherwise strong.
+
+cw-joe-sugarman — 88
+Summary: First sentence sells the second ("My New Date Called Me 'Old'. I knew right then..."). Multiple triggers present: curiosity, honesty (admits pain), specificity, hope, involvement. Flow is excellent; each beat pulls to the next. No dead spots. One of the strongest fits.
+
+cw-gary-bencivenga — 72
+Summary: Proof is present (Nina, daughter, dozen women, Michael) and relatable. No traditional bullets or fascinations; narrative does the work. Risk reversal is missing—no guarantee or "no downside" stated. Reasons why are implied (doctors' wives) but not stacked. Strong story, weaker on bullet-proof-risk-reversal structure.
+
+cw-dan-kennedy — 78
+Summary: Personality and voice are strong; objection handling present ("I almost didn't listen"). Direct response mechanics are soft—CTA is "I'm sharing below," no urgency or scarcity. List relationship is assumed. Good fit for tone; weaker on urgency and single clear CTA.
+
+cw-john-carlton — 85
+Summary: Selling style throughout; story earns the sell. Control is clear (hook → pain → discovery → transformation → close). Big promise (confidence, feeling enough) delivered and proved. Hook stops the scroll. Proof (Nina, results, Michael) matches the promise. Strong.
+
+cw-clayton-makepeace — 70
+Summary: No bullet list; benefit and mechanism appear in closing prose ("5 brands... smoothing fine lines, firming sagging skin, fading dark spots"). Headline is story-based, not derived from a bullet. Fascinations and Makepeace-style bullet structure are largely absent. Good narrative, weak on bullet/formula criteria.
+
+cw-bob-bly — 82
+Summary: Facts over fluff—specific numbers and details (23 years, $2,000, three sessions, 56, etc.). Headline works. Benefits clear; structure (AIDA) present. CTA is soft ("see which 5 brands") rather than one hard response mechanism. Strong on facts and clarity.
+
+cw-claude-hopkins — 78
+Summary: Specific claims throughout (names, numbers, outcomes). Preemptive angle present ("what the actual doctors are giving their wives"). Offer clarity is partial—"which 5 brands" is intriguing but vague. Testing mindset and service angle are there. Deduction for offer clarity.
+
+----------------------------------------
+[Book] BOOK SCORERS (5)
+----------------------------------------
+
+book-cashvertising — 84
+Summary: Life-Force 8 clearly tapped (social approval, freedom from fear/invisibility, comfort). Headline stops and pulls. Fear of being invisible is specific and paired with a clear solution. Sensory language is strong (lines, sagging jaw, dry papery feeling). Social proof (Nina, dozen women, daughter) mirrors audience. No scarcity; USP is "doctors' wives" and 5 brands. Strong overall.
+
+book-breakthrough-advertising — 82
+Summary: One mass desire (being seen, confidence) drives the piece. Headline doesn't mention product and is believable. Awareness (problem/solution) is matched. Several of the seven techniques present: Identification (becoming who she wants), Mechanization (Nina's recommendation), Intensification. Body journey (Attention → Agreement → Desire → Identification → Conviction) is clear. Sophistication could be sharper.
+
+book-scientific-advertising — 76
+Summary: Specific over general—names, numbers, outcomes throughout. Preemptive claim ("doctors giving their wives") is present. Offer clarity is weak: "see which 5 brands" doesn't state exactly what they get or commit. Testing mindset and service angle are good. Deduction mainly for offer clarity.
+
+book-influence-cialdini — 80
+Summary: Social proof (Nina, dozen women, daughter, Michael) and authority (dermatology office, doctors) are strong. Liking and relatability high. Reciprocity implied (she's sharing). Commitment/consistency ("If you're where I was...") invited. Scarcity is absent. Four to five principles used well; no scarcity.
+
+book-ogilvy-on-advertising — 84
+Summary: Headline does real work. Copy is research-driven with concrete details. Clarity and benefit focus are strong. Credibility from Nina, results, and "doctors' wives." Opening continues the headline. Fits the book's criteria well.
+
+----------------------------------------
+META SCORER (Algorithm Perspective)
+----------------------------------------
+
+meta-score — 79
+Summary: Meta's algorithm would treat this as above-average on engagement (story drives saves, shares, long comments) and first impression (strong hook). Ad quality is good—reads like organic story; some ALL CAPS (SAW it, TOOK A CALL, WORSE) are minor flags. Policy: "women over 45" in CTA is demographic, not a direct personal-attribute assertion; aging/appearance is in a monitored category but framed as her story. Negative feedback risk is low; soft CTA, no aggressive urgency. Creative freshness is mixed—story format and "friend told me" discovery are common in the niche, but execution and detail are strong. Composite suggests Average to Above Average on relevance diagnostics; expect reasonable delivery with no major penalties.
+
+Sub-scores (reference):
+• Ad Quality Signals (25%): 76 — Clean with minor caps/sensationalism.
+• Engagement Prediction (25%): 88 — High save/share/long-comment potential.
+• Policy & Compliance (20%): 74 — Monitored category; no direct violations.
+• Negative Feedback Risk (15%): 82 — Low; non-invasive, soft close.
+• Creative Freshness (10%): 62 — Some fatigued patterns; execution helps.
+• First-Impression Density (5%): 85 — Hook is strong.
+
+================================================================================
+SUMMARY TABLE
+================================================================================
+
+SCORER                      TYPE    SCORE
+-----------------------------------------
+cw-eugene-schwartz          CW      81
+cw-david-ogilvy             CW      85
+cw-gary-halbert             CW      82
+cw-joe-sugarman             CW      88
+cw-gary-bencivenga          CW      72
+cw-dan-kennedy              CW      78
+cw-john-carlton             CW      85
+cw-clayton-makepeace        CW      70
+cw-bob-bly                  CW      82
+cw-claude-hopkins           CW      78
+book-cashvertising          Book    84
+book-breakthrough-advertising  Book  82
+book-scientific-advertising Book    76
+book-influence-cialdini      Book    80
+book-ogilvy-on-advertising  Book    84
+meta-score                  Meta    79
+
+CW average:  80.1
+Book average: 81.2
+Overall (CW + Book + Meta): 80.2
+
+================================================================================
+END OF REPORT
+================================================================================

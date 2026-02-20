@@ -1,0 +1,12 @@
+# Render.com — one-click deploy for Copy Scorer
+# After pushing to GitHub: connect repo at render.com and use "New" → "Blueprint" to apply this, or create a Web Service manually with the settings below.
+
+services:
+  - type: web
+    name: copy-scorer
+    runtime: python
+    rootDir: web
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars: []
+    # Free tier: spins down after 15 min inactivity (first load may take ~1 min)

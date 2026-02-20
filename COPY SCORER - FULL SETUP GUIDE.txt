@@ -1,0 +1,226 @@
+================================================================================
+COPY SCORER — FULL SETUP GUIDE (NO CODING EXPERIENCE NEEDED)
+================================================================================
+
+This guide gets the Copy Scorer app from your computer onto the internet so you
+can open it with a link. You will use GitHub (to store the files) and Vercel
+(to turn them into a live website).
+
+Do the steps in order. If something doesn’t work, re-read the step and check
+spelling, spaces, and that you’re in the right folder.
+
+--------------------------------------------------------------------------------
+PART 1: GET GIT ON YOUR COMPUTER
+--------------------------------------------------------------------------------
+
+1. Go to: https://git-scm.com/download/win
+2. Download "64-bit Git for Windows Setup" and run it.
+3. Click Next through the installer (defaults are fine). Finish.
+4. Close any open terminals, then open a new one (see Part 2).
+
+--------------------------------------------------------------------------------
+PART 2: OPEN A TERMINAL IN YOUR PROJECT FOLDER
+--------------------------------------------------------------------------------
+
+1. Open File Explorer and go to the folder that contains your Copy Scorer
+   project. It’s the folder that has these inside it:
+   - a folder named "api"
+   - a folder named "public"
+   - a folder named "web"
+   - a file named "vercel.json"
+
+2. Click once on the folder’s address bar at the top (so the path is selected).
+   Type:  cmd   and press Enter.
+   A black window (Command Prompt) will open. You’re now "in" that folder.
+
+   OR in Cursor/VS Code: menu Terminal → New Terminal. Then type:
+   cd "c:\Users\calvi\Claude - Test"
+   (Change the path if your project lives somewhere else.) Press Enter.
+
+--------------------------------------------------------------------------------
+PART 3: CREATE A GITHUB ACCOUNT (IF YOU DON’T HAVE ONE)
+--------------------------------------------------------------------------------
+
+1. Go to: https://github.com
+2. Sign up with your email. Remember your username and password.
+
+--------------------------------------------------------------------------------
+PART 4: CREATE A NEW REPOSITORY ON GITHUB
+--------------------------------------------------------------------------------
+
+1. Log in to GitHub.
+2. Click the + icon (top right) → "New repository".
+3. Under "Repository name" type:  copy-scorer   (or any name, no spaces).
+4. Leave "Public" selected.
+5. Do NOT check "Add a README file" or "Add .gitignore". Leave everything
+   unchecked.
+6. Click "Create repository".
+7. You’ll see a page with setup instructions. Leave that tab open; you’ll need
+   the repo address in Part 7. It looks like:
+   https://github.com/YOUR_USERNAME/copy-scorer.git
+   Replace YOUR_USERNAME with your actual GitHub username.
+
+--------------------------------------------------------------------------------
+PART 5: TELL GIT WHO YOU ARE (ONE-TIME SETUP)
+--------------------------------------------------------------------------------
+
+In the same terminal (black window or Cursor terminal), run these two commands
+one at a time. Replace with your real name and the email you use for GitHub.
+
+   git config --global user.name "Your Full Name"
+   git config --global user.email "your-email@example.com"
+
+Press Enter after each line.
+
+--------------------------------------------------------------------------------
+PART 6: TURN YOUR FOLDER INTO A GIT REPO AND ADD ALL FILES
+--------------------------------------------------------------------------------
+
+Make sure you’re in the project folder (the one that has "api", "public", "web"
+inside it). Then run these commands one at a time. Press Enter after each.
+
+   git init
+   git branch -M main
+   git add .
+   git status
+   git commit -m "Copy Scorer app"
+
+- "git status" will list files. That’s normal.
+- "git commit" might open a text editor. If it does: save (Ctrl+S) and close
+  the editor, then the commit will finish.
+
+--------------------------------------------------------------------------------
+PART 7: CONNECT YOUR FOLDER TO GITHUB AND PUSH
+--------------------------------------------------------------------------------
+
+1. Get your repo address from GitHub. It looks like:
+   https://github.com/YOUR_USERNAME/copy-scorer.git
+   Use YOUR actual username and repo name.
+
+2. In the terminal, run (replace the URL with yours, one line):
+
+   git remote add origin https://github.com/YOUR_USERNAME/copy-scorer.git
+
+3. Then run:
+
+   git push -u origin main
+
+4. If Git asks for login:
+   - Username: your GitHub username
+   - Password: do NOT use your normal GitHub password.
+     You must use a "Personal Access Token."
+     To create one:
+     a) On GitHub: click your profile picture (top right) → Settings.
+     b) Left sidebar, bottom: "Developer settings" → "Personal access tokens"
+        → "Tokens (classic)".
+     c) "Generate new token (classic)". Name it e.g. "Copy Scorer".
+     d) Under "Expiration" pick 90 days or No expiration.
+     e) Under "Scopes" check:  repo
+     f) Click "Generate token". Copy the token (long string) right away.
+     g) When Git asks for "Password", paste that token. Don’t type anything.
+
+5. If the push is REJECTED and says "fetch first" or "updates were rejected":
+   Run these two commands in order, then try the push again:
+   git pull origin main --no-rebase
+   git push origin main
+   If it opens an editor for a merge message, save and close it, then run
+   git push origin main  again.
+
+--------------------------------------------------------------------------------
+PART 8: MAKE SURE THE "public" FOLDER IS ON GITHUB
+--------------------------------------------------------------------------------
+
+1. On GitHub, open your repo (refresh the page).
+2. Look for a folder named "public". Click it.
+3. Inside "public" you should see "index.html".
+   If you do NOT see "public" or "index.html", run this in your terminal
+   (in the project folder):
+
+   git add public/
+   git commit -m "Add public folder for Vercel"
+   git push origin main
+
+   If push is rejected again, run:
+   git pull origin main --no-rebase
+   git push origin main
+
+--------------------------------------------------------------------------------
+PART 9: DEPLOY ON VERCEL TO GET A LINK
+--------------------------------------------------------------------------------
+
+1. Go to: https://vercel.com
+2. Sign up or log in. Choose "Continue with GitHub" so Vercel can see your
+   repos.
+3. Click "Add New…" → "Project".
+4. Find your repo (e.g. "copy-scorer") in the list. Click "Import" next to it.
+5. On the next screen:
+   - "Root Directory": leave EMPTY. Do not type "web" or anything.
+   - "Framework Preset": leave as is (or "Other").
+   - Do not change Build Command or Output Directory.
+6. Click "Deploy".
+7. Wait 1–2 minutes. When it says "Congratulations", your site is live.
+8. Click "Visit" or copy the URL (e.g. https://copy-scorer-xxxx.vercel.app).
+   That’s your link. Open it in a browser.
+
+--------------------------------------------------------------------------------
+PART 10: IF YOU GET A 404 (PAGE NOT FOUND) ON VERCEL
+--------------------------------------------------------------------------------
+
+1. In Vercel: go to your project → Settings → General.
+2. Find "Root Directory". It must be EMPTY. If it says "web" or anything,
+   clear it and save.
+3. Go to Deployments. Click the three dots on the latest deployment →
+   "Redeploy". Wait for it to finish, then try your link again.
+4. On GitHub, confirm the repo has a "public" folder with "index.html" inside
+   (see Part 8). If not, add and push the public folder (commands in Part 8),
+   then redeploy on Vercel.
+
+--------------------------------------------------------------------------------
+PART 11: USING THE APP
+--------------------------------------------------------------------------------
+
+1. Open your Vercel link.
+2. Paste your ad or copy into the big text box.
+3. Click "Grade". Score bubbles will appear (Copywriters, Books, Meta).
+4. Click any bubble to see the full summary in the panel on the right.
+5. To get revised copy: turn ON "Rewrite to 90+", then click "Rewrite to 90+".
+   You’ll see original vs revised with yellow highlights on what changed.
+
+--------------------------------------------------------------------------------
+PART 12: WHEN YOU CHANGE FILES LATER
+--------------------------------------------------------------------------------
+
+1. Open a terminal in your project folder (same as Part 2).
+2. Run these three commands, one at a time:
+   git add .
+   git commit -m "Short description of what you changed"
+   git push origin main
+3. Vercel will automatically redeploy. In a minute or two, your link will show
+   the updates.
+
+--------------------------------------------------------------------------------
+QUICK REFERENCE — COMMANDS IN ORDER (FIRST-TIME SETUP)
+--------------------------------------------------------------------------------
+
+cd "c:\Users\calvi\Claude - Test"
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+git init
+git branch -M main
+git add .
+git commit -m "Copy Scorer app"
+git remote add origin https://github.com/YOUR_USERNAME/copy-scorer.git
+git push -u origin main
+
+If push rejected:
+git pull origin main --no-rebase
+git push origin main
+
+If public folder missing on GitHub:
+git add public/
+git commit -m "Add public folder for Vercel"
+git push origin main
+
+--------------------------------------------------------------------------------
+END OF GUIDE
+--------------------------------------------------------------------------------

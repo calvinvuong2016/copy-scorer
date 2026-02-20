@@ -148,6 +148,20 @@
       min-width: 220px;
     }
     .scores-section { margin-bottom: 32px; }
+    .blended-scores {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 12px 16px;
+      background: var(--accent-soft);
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    .blended-scores .label { font-weight: 600; color: var(--accent); }
+    .blended-scores .overall { font-weight: 700; font-size: 1.1rem; }
+    .blended-scores .segment { color: var(--text-muted); }
     .scores-section h2 {
       font-size: 1rem;
       font-weight: 600;
@@ -331,6 +345,7 @@
     </section>
 
     <section class="scores-section" id="scoresSection" style="display: none;">
+      <div class="blended-scores" id="blendedScores"></div>
       <h2>Copywriters (CW)</h2>
       <div class="bubbles" id="bubblesCw"></div>
       <h2 style="margin-top: 20px;">Books</h2>
@@ -452,6 +467,24 @@
     function renderBubbles(results) {
       const byType = { cw: [], book: [], meta: [] };
       results.forEach((r) => byType[r.type] && byType[r.type].push(r));
+      function avg(list) {
+        if (!list || list.length === 0) return null;
+        const sum = list.reduce((a, r) => a + (Number(r.score) || 0), 0);
+        return Math.round(sum / list.length);
+      }
+      const overall = avg(results);
+      const cwAvg = avg(byType.cw);
+      const bookAvg = avg(byType.book);
+      const metaAvg = avg(byType.meta);
+      const blendedEl = document.getElementById('blendedScores');
+      if (blendedEl) {
+        const parts = [];
+        if (overall != null) parts.push(`<span class="label overall">Blended: ${overall}</span>`);
+        if (cwAvg != null) parts.push(`<span class="segment">CW ${cwAvg}</span>`);
+        if (bookAvg != null) parts.push(`<span class="segment">Book ${bookAvg}</span>`);
+        if (metaAvg != null) parts.push(`<span class="segment">Meta ${metaAvg}</span>`);
+        blendedEl.innerHTML = parts.join(' · ');
+      }
       function fill(el, list) {
         el.innerHTML = '';
         (list || []).forEach((r) => {

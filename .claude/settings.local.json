@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:read.americanhealthjournal.org)",
+      "Bash(powershell -File:*)",
+      "Bash(python:*)",
+      "Bash(where:*)",
+      "Bash(move:*)",
+      "WebFetch(domain:www.loom.com)",
+      "Bash(dir:*)",
+      "WebSearch",
+      "WebFetch(domain:api.redtrack.io)",
+      "WebFetch(domain:www.redtrack.io)",
+      "WebFetch(domain:help.redtrack.io)",
+      "Bash(winget --version:*)",
+      "Bash(winget install:*)",
+      "Bash(/c/Users/calvi/AppData/Local/Programs/Python/Python312/python.exe:*)"
+    ]
+  }
+}

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copy Scorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f8f9fc;
+      --surface: #ffffff;
+      --border: #e2e6f0;
+      --text: #1a1d2e;
+      --text-muted: #5c6370;
+      --accent: #2d4a8a;
+      --accent-soft: #e8ecf5;
+      --cw: #1e5631;
+      --cw-soft: #e6f0e9;
+      --book: #6b4e71;
+      --book-soft: #f0ebf1;
+      --meta: #8b6914;
+      --meta-soft: #f5f0e0;
+      --highlight: #fef9c3;
+      --shadow: 0 1px 3px rgba(0,0,0,.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      padding-right: calc(24px + 380px);
+    }
+    .app.with-panel { padding-right: 420px; }
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text);
+    }
+    .input-section {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+    }
+    .input-section label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.95rem;
+      resize: vertical;
+      transition: border-color .15s;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    button {
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: background .15s, transform .05s;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: #243d6d; }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+    .btn-secondary:hover { background: #dce2f0; }
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .toggle-wrap input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .toggle-wrap span { color: var(--text-muted); font-size: 0.9rem; }
+    .scores-section { margin-bottom: 32px; }
+    .scores-section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .bubbles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .bubble {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .bubble:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(45,74,138,.12);
+    }
+    .bubble[data-type="cw"] { border-left: 3px solid var(--cw); }
+    .bubble[data-type="book"] { border-left: 3px solid var(--book); }
+    .bubble[data-type="meta"] { border-left: 3px solid var(--meta); }
+    .bubble .name { font-weight: 500; color: var(--text); }
+    .bubble .score {
+      font-weight: 700;
+      min-width: 28px;
+      text-align: center;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .bubble[data-type="cw"] .score { background: var(--cw-soft); color: var(--cw); }
+    .bubble[data-type="book"] .score { background: var(--book-soft); color: var(--book); }
+    .bubble[data-type="meta"] .score { background: var(--meta-soft); color: var(--meta); }
+    .panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 400px;
+      max-width: 100%;
+      height: 100vh;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.08);
+      padding: 24px;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform .25s ease;
+      z-index: 100;
+    }
+    .panel.open { transform: translateX(0); }
+    .panel h3 {
+      margin: 0 0 8px 0;
+      font-size: 1.15rem;
+    }
+    .panel .type-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+    .panel .type-badge.cw { background: var(--cw-soft); color: var(--cw); }
+    .panel .type-badge.book { background: var(--book-soft); color: var(--book); }
+    .panel .type-badge.meta { background: var(--meta-soft); color: var(--meta); }
+    .panel .score-big {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .panel .summary {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .panel-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    .panel-close:hover { color: var(--text); }
+    .compare-section {
+      display: none;
+      margin-top: 32px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .compare-section.visible { display: block; }
+    .compare-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .compare-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 320px;
+    }
+    @media (max-width: 900px) { .compare-body { grid-template-columns: 1fr; } }
+    .compare-col {
+      padding: 20px;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      max-height: 480px;
+    }
+    .compare-col:last-child { border-right: none; }
+    .compare-col h4 {
+      margin: 0 0 12px 0;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--text-muted);
+    }
+    .compare-content {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .compare-content .hl { background: var(--highlight); }
+    .loading { opacity: .7; pointer-events: none; }
+    .error {
+      background: #fef2f2;
+      color: #991b1b;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <h1>Copy Scorer</h1>
+      <div class="toggle-wrap">
+        <input type="checkbox" id="rewriteToggle" />
+        <label for="rewriteToggle"><span>Rewrite to 90+</span></label>
+      </div>
+    </header>
+
+    <section class="input-section">
+      <label for="copyInput">Copy to grade</label>
+      <textarea id="copyInput" placeholder="Paste your ad or copy here…"></textarea>
+      <div class="actions">
+        <button type="button" class="btn-primary" id="gradeBtn">Grade</button>
+        <button type="button" class="btn-secondary" id="rewriteBtn" style="display: none;">Rewrite to 90+</button>
+      </div>
+      <div id="errorEl" class="error" style="display: none;"></div>
+    </section>
+
+    <section class="scores-section" id="scoresSection" style="display: none;">
+      <h2>Copywriters (CW)</h2>
+      <div class="bubbles" id="bubblesCw"></div>
+      <h2 style="margin-top: 20px;">Books</h2>
+      <div class="bubbles" id="bubblesBook"></div>
+      <h2 style="margin-top: 20px;">Meta</h2>
+      <div class="bubbles" id="bubblesMeta"></div>
+    </section>
+
+    <section class="compare-section" id="compareSection">
+      <div class="compare-header">
+        Original vs Revised (highlighted = changed)
+        <button type="button" class="btn-secondary" id="closeCompare">Close</button>
+      </div>
+      <div class="compare-body">
+        <div class="compare-col">
+          <h4>Original</h4>
+          <div class="compare-content" id="originalContent"></div>
+        </div>
+        <div class="compare-col">
+          <h4>Revised</h4>
+          <div class="compare-content" id="revisedContent"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="panel" id="panel">
+    <button type="button" class="panel-close" id="panelClose" aria-label="Close">&times;</button>
+    <div class="type-badge" id="panelType"></div>
+    <h3 id="panelName"></h3>
+    <div class="score-big" id="panelScore"></div>
+    <div class="summary" id="panelSummary"></div>
+  </aside>
+
+  <script>
+    const copyInput = document.getElementById('copyInput');
+    const gradeBtn = document.getElementById('gradeBtn');
+    const rewriteBtn = document.getElementById('rewriteBtn');
+    const rewriteToggle = document.getElementById('rewriteToggle');
+    const errorEl = document.getElementById('errorEl');
+    const scoresSection = document.getElementById('scoresSection');
+    const bubblesCw = document.getElementById('bubblesCw');
+    const bubblesBook = document.getElementById('bubblesBook');
+    const bubblesMeta = document.getElementById('bubblesMeta');
+    const panel = document.getElementById('panel');
+    const panelClose = document.getElementById('panelClose');
+    const panelType = document.getElementById('panelType');
+    const panelName = document.getElementById('panelName');
+    const panelScore = document.getElementById('panelScore');
+    const panelSummary = document.getElementById('panelSummary');
+    const compareSection = document.getElementById('compareSection');
+    const originalContent = document.getElementById('originalContent');
+    const revisedContent = document.getElementById('revisedContent');
+    const closeCompare = document.getElementById('closeCompare');
+
+    let lastResults = [];
+    let lastCopy = '';
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = msg ? 'block' : 'none';
+    }
+
+    function setLoading(loading) {
+      gradeBtn.disabled = loading;
+      app.classList.toggle('loading', loading);
+    }
+
+    async function grade() {
+      const copy = (copyInput.value || '').trim();
+      if (!copy) {
+        showError('Please enter copy to grade.');
+        return;
+      }
+      showError('');
+      setLoading(true);
+      try {
+        const res = await fetch('/api/grade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ copy }),
+        });
+        if (!res.ok) throw new Error(res.statusText || 'Grade failed');
+        const data = await res.json();
+        lastResults = data;
+        lastCopy = copy;
+        renderBubbles(data);
+        scoresSection.style.display = 'block';
+        updateRewriteButtonVisibility();
+      } catch (e) {
+        showError('Could not grade. Is the server running? ' + (e.message || ''));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderBubbles(results) {
+      const byType = { cw: [], book: [], meta: [] };
+      results.forEach((r) => byType[r.type] && byType[r.type].push(r));
+      function fill(el, list) {
+        el.innerHTML = '';
+        (list || []).forEach((r) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'bubble';
+          b.dataset.id = r.id;
+          b.dataset.type = r.type;
+          b.dataset.name = r.name;
+          b.dataset.score = r.score;
+          b.dataset.summary = r.summary;
+          b.innerHTML = `<span class="name">${escapeHtml(r.name)}</span><span class="score">${r.score}</span>`;
+          b.addEventListener('click', () => openPanel(r));
+          el.appendChild(b);
+        });
+      }
+      fill(bubblesCw, byType.cw);
+      fill(bubblesBook, byType.book);
+      fill(bubblesMeta, byType.meta);
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function openPanel(r) {
+      panelType.textContent = r.type.toUpperCase();
+      panelType.className = 'type-badge ' + r.type;
+      panelName.textContent = r.name;
+      panelScore.textContent = r.score;
+      panelSummary.textContent = r.summary;
+      panel.classList.add('open');
+      app.classList.add('with-panel');
+    }
+
+    function closePanel() {
+      panel.classList.remove('open');
+      app.classList.remove('with-panel');
+    }
+
+    panelClose.addEventListener('click', closePanel);
+
+    gradeBtn.addEventListener('click', grade);
+
+    function updateRewriteButtonVisibility() {
+      rewriteBtn.style.display = rewriteToggle.checked ? 'inline-block' : 'none';
+    }
+    rewriteToggle.addEventListener('change', updateRewriteButtonVisibility);
+
+    function getDiffRanges(orig, rev) {
+      const ranges = [];
+      const ol = orig.length;
+      const rl = rev.length;
+      let i = 0, j = 0;
+      while (i < ol || j < rl) {
+        if (i < ol && j < rl && orig[i] === rev[j]) {
+          i++;
+          j++;
+          continue;
+        }
+        const start = j;
+        while (j < rl) {
+          if (i < ol && orig[i] === rev[j]) break;
+          if (i < ol) i++;
+          j++;
+        }
+        if (start < j) ranges.push([start, j]);
+      }
+      return ranges;
+    }
+
+    function mergeRanges(ranges) {
+      if (!ranges.length) return [];
+      const sorted = ranges.slice().sort((a, b) => a[0] - b[0]);
+      const out = [[sorted[0][0], sorted[0][1]]];
+      for (let k = 1; k < sorted.length; k++) {
+        const [s, e] = sorted[k];
+        if (s <= out[out.length - 1][1]) {
+          out[out.length - 1][1] = Math.max(out[out.length - 1][1], e);
+        } else {
+          out.push([s, e]);
+        }
+      }
+      return out;
+    }
+
+    function renderHighlighted(text, ranges) {
+      const merged = mergeRanges(ranges);
+      if (!merged.length) return escapeHtml(text);
+      const parts = [];
+      let last = 0;
+      merged.forEach(([s, e]) => {
+        if (s > last) parts.push(escapeHtml(text.slice(last, s)));
+        parts.push('<span class="hl">' + escapeHtml(text.slice(s, e)) + '</span>');
+        last = e;
+      });
+      if (last < text.length) parts.push(escapeHtml(text.slice(last)));
+      return parts.join('');
+    }
+
+    async function rewrite() {
+      const copy = (copyInput.value || '').trim();
+      if (!copy) {
+        showError('Please enter copy first.');
+        return;
+      }
+      showError('');
+      setLoading(true);
+      try {
+        const res = await fetch('/api/rewrite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ copy }),
+        });
+        if (!res.ok) throw new Error(res.statusText || 'Rewrite failed');
+        const { revised } = await res.json();
+        const ranges = getDiffRanges(copy, revised);
+        originalContent.textContent = copy;
+        revisedContent.innerHTML = renderHighlighted(revised, ranges);
+        compareSection.classList.add('visible');
+      } catch (e) {
+        showError('Could not rewrite. ' + (e.message || ''));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    rewriteBtn.addEventListener('click', rewrite);
+    closeCompare.addEventListener('click', () => compareSection.classList.remove('visible'));
+  </script>
+</body>
+</html>

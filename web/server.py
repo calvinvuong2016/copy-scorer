@@ -296,18 +296,25 @@ def _load_skill_prompt(scorer_id: str) -> str | None:
         return None
 
 
-_REWRITE_SYSTEM_PREFIX = """You are rewriting copy in the style of the copywriter whose framework is below. Two non-negotiable rules:
+_REWRITE_SYSTEM_PREFIX = """You are rewriting ad copy in the style of the copywriter whose framework is described below. The framework is for YOUR use only to guide tone and structure. It must NEVER appear in the ad.
 
-1) CHANGES MUST START AT THE TOP. Do not leave the opening and middle mostly unchanged and then add or change stuff at the end. The FIRST sentence must be rewritten in this copywriter's voice. The opening paragraph must be rewritten. The middle rephrased and restructured. The close in their style. Spread the rewrite from top to bottom — if the only big changes are near the end, you have failed.
+--- RULE 1: FULL REWRITE, TOP TO BOTTOM ---
+- You must REWRITE the entire piece. The first sentence of your output must be DIFFERENT from the first sentence of the input. The opening paragraph must be rewritten. The body must be rephrased and restructured. The close must be a rewrite of the original close in this copywriter's style.
+- FORBIDDEN: Leaving the original opening and middle mostly intact and then adding a new paragraph or block at the end. If your "revision" is mostly the original plus a tacked-on ending, you have failed. The revised copy should feel like one cohesive rewrite, not original + add-on.
+- Length: Your revised copy should be similar in length to the original (or shorter). Do not add a long new block at the end.
 
-2) DO NOT PUT THE FRAMEWORK INTO THE AD. The text below describes the copywriter's methodology (scoring criteria, techniques, how they think about copy). It is instructions FOR YOU, not text to include in the rewrite. Your revised copy must be a normal ad for the product/offer only. Do not quote or paraphrase the framework. Do not add sentences that explain copywriting concepts (e.g. "awareness stage," "mechanism," "benefit + intrigue"), reference the copywriter or their book by name, or insert scoring-criteria language. The reader should see only selling copy — no meta-commentary or teaching points from the framework.
+--- RULE 2: NO FRAMEWORK OR COPYWRITING JARGON IN THE AD ---
+The ad must read like a normal sales message. The reader must never see copywriting theory or methodology. You must NOT include in the revised copy:
+- Any of these words or phrases: "awareness", "mechanism", "mass desire", "benefit + mechanism + intrigue", "borrowed interest", "risk reversal", "scoring", "criteria", "framework", "headline does the work", "P.S. as closer", "Life-Force 8", "psychological triggers", "one reader", "selling style", or similar copywriting-course language.
+- The copywriter's name or the name of any book (e.g. Breakthrough Advertising, Cashvertising, Boron Letters).
+- Any sentence that explains how copy works or what makes copy good. Only selling copy aimed at the prospect.
 
-Other rules:
-- Apply this copywriter's signature techniques (opening style, rhythm, bullets, P.S., length) throughout so the ad reads as if they wrote it. You may add new persuasive content that fits the offer.
+--- OTHER ---
+- Apply this copywriter's style (opening hook, rhythm, bullets, P.S., tone) throughout — but without using the jargon above. You may add persuasive content that fits the offer.
 - Natural, conversational language. 3rd–5th grade reading level. No AI patterns (no triplets, no "not just X but Y").
-- Output valid JSON only: {"revised": "<full revised copy>", "summary": "<one sentence>"}. "revised" = complete rewrite with newlines as \\n. "summary" = one short sentence.
+- Output valid JSON only: {"revised": "<full revised copy>", "summary": "<one sentence>"}. "revised" = complete rewrite, newlines as \\n. "summary" = one short sentence.
 
-Framework for this copywriter (use it to guide your style and structure only — do not echo it in the ad):
+Framework (use for style and structure only; do not quote or echo in the ad):
 """
 
 
@@ -324,8 +331,12 @@ def _rewrite_via_claude(copy_text: str, scorer_id: str, scorer_name: str) -> tup
     except ImportError:
         return None, None, False
     system = _REWRITE_SYSTEM_PREFIX + framework
-    user = f"""Rewrite the following copy as {scorer_name} would write it. Start by rewriting the FIRST sentence and opening, then the middle, then the close. Do not leave the top unchanged and only edit the end. The output must be a normal ad only — do not insert any text that comes from the copywriter's methodology or framework (no scoring terms, no "how to write" ideas, no references to the copywriter or their book). Output only valid JSON with keys "revised" and "summary".
+    user = f"""Rewrite the following ad in {scorer_name}'s style. Requirements:
+1) Change the FIRST sentence — do not keep the original first sentence. Rewrite the opening, then the middle, then the close. Do not output the original with a new paragraph tacked on at the end.
+2) The revised ad must be normal selling copy only. Do not include any copywriting jargon (no "mechanism", "awareness", "benefit + intrigue", etc.), copywriter names, or book titles. If in doubt, leave it out.
+Output only valid JSON: {{"revised": "<full revised ad>", "summary": "<one sentence>"}}.
 
+ORIGINAL COPY:
 {copy_text}"""
     try:
         client = anthropic.Anthropic(api_key=api_key.strip())

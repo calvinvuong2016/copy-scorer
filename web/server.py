@@ -309,23 +309,28 @@ def _load_skill_prompt(scorer_id: str) -> str | None:
         return None
 
 
-_REWRITE_SYSTEM_PREFIX = """You ARE the copywriter (or book framework) described below. The document is YOUR own methodology—how you think about copy, what you score, and what 90+ looks like on your rubric. Your job: rewrite the given ad as YOU would write it so that if you scored it against your own criteria, it would earn 90+.
+# Injected when loading framework for REWRITE so the model does full replacement, not "revise weak spots".
+_REWRITE_MODE_OVERRIDE = """
+--- REWRITE TASK (override any "revision" workflow in the framework below) ---
+You are doing a FULL REPLACEMENT, not a patch. Do not "revise by fixing the lowest-scoring elements" or "add a revision at the end." Write the entire ad from scratch in your voice. Same offer and key facts; every sentence rewritten. The document below is for your voice and 90+ criteria only.
+"""
+
+_REWRITE_SYSTEM_PREFIX = """You ARE the copywriter (or book framework) described below. The document is YOUR methodology and what 90+ means on your rubric. Your job: write a COMPLETE REPLACEMENT of the ad as you would write it, so it would score 90+.
+
+--- CRITICAL: COMPLETE REPLACEMENT ONLY ---
+- Your output must be a NEW ad. Same offer, same product, same audience—but YOU write every sentence. Opening = your first sentence (not the original's). Body = your phrasing and structure. Close = your closing (e.g. your P.S.), not the original's close.
+- FAILURE (forbidden): Returning the original ad with the same or nearly same opening and body, then adding a new block (e.g. "Here's what you get...", bullets, "P.S. The link below..."). That is a tacked-on ending. Reject that approach.
+- SUCCESS: A standalone ad that starts with YOUR opening line, flows in YOUR voice, and ends with YOUR close. Total length in the same ballpark as the original; no long add-on at the end.
+- Before returning, check: (1) Is my first sentence different from the original's first sentence? (2) Is my ending my own close, not the original's last paragraph plus new lines? If either is no, rewrite.
 
 --- STAY IN CHARACTER ---
-- Write the way this copywriter writes: same opening moves, rhythm, use of bullets, P.S., tone, and structure that your rubric rewards.
-- Use the document's "90–100" / "Perfect" row as your target. Every element that your rubric scores (e.g. awareness match, mechanism, one-reader voice, borrowed interest, headline, proof, etc.) must be satisfied in the revised copy.
-- The reader of the ad must never see your methodology—no copywriter names, no book titles, no words like "awareness", "mechanism", "mass desire", "borrowed interest", "risk reversal", "Life-Force 8", "psychological triggers", "one reader", "benefit + mechanism + intrigue", or any other framework jargon. Only selling copy aimed at the prospect.
-
---- FULL REWRITE, NOT PATCH ---
-- REWRITE the piece from the top. The first sentence of your output MUST be different from the first sentence of the input. Rewrite the opening, then the middle, then the close in your voice.
-- FORBIDDEN: Keeping the original opening and body and adding a new block at the end. The result must be one cohesive ad you would put your name on, not the original with a tacked-on ending.
-- Length: Similar to the original or shorter. Do not append a long new section.
+- Use your rubric's 90–100 row. Satisfy every element you score (awareness, mechanism, one-reader voice, headline, proof, etc.). No methodology jargon in the ad—no "awareness", "mechanism", "borrowed interest", copywriter or book names. Only selling copy.
 
 --- OUTPUT ---
-- Natural, conversational language. 3rd–5th grade reading level. No AI patterns (no triplets, no "not just X but Y").
-- Reply with valid JSON only: {"revised": "<full revised copy>", "summary": "<one short sentence describing what you changed>"}. Use \\n for newlines inside "revised".
+- Natural language, 3rd–5th grade level. No AI patterns (no triplets, no "not just X but Y").
+- Valid JSON only: {"revised": "<full revised copy>", "summary": "<one short sentence>"}. Newlines as \\n in "revised".
 
-Your framework (this is how YOU score and what 90+ means for you):
+Your framework (how YOU score and what 90+ means):
 """
 
 
@@ -341,10 +346,10 @@ def _rewrite_via_claude(copy_text: str, scorer_id: str, scorer_name: str) -> tup
         import anthropic
     except ImportError:
         return None, None, False
-    system = _REWRITE_SYSTEM_PREFIX + framework
-    user = f"""You are {scorer_name}. Rewrite the ad below as you would write it so it scores 90+ on your own criteria. Full rewrite from the first sentence; no tacked-on ending. The ad must be pure selling copy—no jargon, no theory, no your name or book titles.
+    system = _REWRITE_SYSTEM_PREFIX + _REWRITE_MODE_OVERRIDE + framework
+    user = f"""You are {scorer_name}. Output a COMPLETE REPLACEMENT of the ad below: your opening sentence, your body, your close. Do not keep the original and add a new block at the end—that is invalid. Same offer and facts; every line in your voice so it would score 90+ on your rubric. No jargon or your name in the ad.
 
-Output only valid JSON: {{"revised": "<full revised ad>", "summary": "<one short sentence>"}}.
+Return only this JSON: {{"revised": "<full revised ad>", "summary": "<one short sentence>"}}.
 
 ORIGINAL COPY:
 {copy_text}"""

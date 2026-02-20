@@ -182,13 +182,18 @@ def _skills_dir():
 
 
 def _load_skill_prompt(scorer_id):
-    """Load framework content from api/skills/{scorer_id}.md. Return None if not found."""
-    path = os.path.join(_skills_dir(), scorer_id + ".md")
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
-    except OSError:
-        return None
+    """Load framework content from api/skills/{scorer_id}.md. Try __file__ path then cwd/api/skills (Vercel)."""
+    filename = scorer_id + ".md"
+    for base in [_skills_dir(), os.path.join(os.getcwd(), "api", "skills")]:
+        if not base:
+            continue
+        path = os.path.join(base, filename)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+        except OSError:
+            continue
+    return None
 
 
 # Injected when loading framework for REWRITE so the model does full replacement, not "revise weak spots".
@@ -217,17 +222,17 @@ Your framework (how YOU score and what 90+ means):
 
 
 def _rewrite_via_claude(copy_text, scorer_id, scorer_name):
-    """Call Claude to rewrite copy using the scorer's framework. Returns (revised, summary, True) on success, or (None, None, False) on failure."""
+    """Call Claude to rewrite copy. Returns (revised, summary, True) on success, or (None, reason, False) on failure."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key or not api_key.strip():
-        return None, None, False
+        return None, "ANTHROPIC_API_KEY is not set. Add it in Vercel: Project → Settings → Environment Variables (Production + Preview), then redeploy.", False
     framework = _load_skill_prompt(scorer_id)
     if not framework:
-        return None, None, False
+        return None, "Writer framework file not found on server. Ensure api/skills/ is deployed with your project.", False
     try:
         import anthropic
     except ImportError:
-        return None, None, False
+        return None, "anthropic package missing. Add anthropic to api/requirements.txt and redeploy.", False
     system = _REWRITE_SYSTEM_PREFIX + _REWRITE_MODE_OVERRIDE + framework
     user = f"""You are {scorer_name}. Output a COMPLETE REPLACEMENT of the ad below: your opening sentence, your body, your close. Do not keep the original and add a new block at the end—that is invalid. Same offer and facts; every line in your voice so it would score 90+ on your rubric. No jargon or your name in the ad.
 
@@ -287,8 +292,11 @@ ORIGINAL COPY:
             except Exception:
                 pass
         return revised, summary, True
-    except Exception:
-        return None, None, False
+    except Exception as e:
+        err = str(e).strip() or "Unknown error"
+        if len(err) > 200:
+            err = err[:197] + "..."
+        return None, "Claude API error: " + err + ". Check ANTHROPIC_API_KEY and redeploy.", False
 
 
 def rewrite_by_model(copy_text, scorer_id):
@@ -296,9 +304,8 @@ def rewrite_by_model(copy_text, scorer_id):
     name = next((n for sid, n, _ in SCORERS if sid == scorer_id), "Eugene Schwartz")
     revised, summary, llm_used = _rewrite_via_claude(copy_text, scorer_id, name)
     if not llm_used:
-        # No template fallback: return original so user sees they need API key
         revised = copy_text
-        summary = "Claude rewrite unavailable. Set ANTHROPIC_API_KEY in Vercel (Project → Settings → Environment Variables) or in .env locally for per-writer rewrites."
+        # summary already has the specific reason from _rewrite_via_claude
     return {
         "revised": revised,
         "summary": summary,

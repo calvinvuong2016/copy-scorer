@@ -262,35 +262,7 @@ ORIGINAL COPY:
         summary = (data.get("summary") or "").strip() or SCORER_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
         if not revised:
             return None, None, False
-        # If opening unchanged, retry once with stricter instruction
-        def first_line(s):
-            return (s or "").strip().split("\n")[0].strip()[:120]
-        if first_line(revised) == first_line(copy_text):
-            retry_user = f"""Your previous response was invalid: the opening was unchanged. You MUST output a COMPLETE REPLACEMENT. Your first sentence must be DIFFERENT from the original. Rewrite the entire ad from the top in your voice. Return only JSON: {{"revised": "<full revised ad>", "summary": "<one short sentence>"}}.
-
-ORIGINAL COPY:
-{copy_text}"""
-            try:
-                msg2 = client.messages.create(
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=4096,
-                    system=system,
-                    messages=[{"role": "user", "content": retry_user}],
-                )
-                text2 = ""
-                for block in getattr(msg2, "content", []):
-                    if getattr(block, "type", None) == "text":
-                        text2 += getattr(block, "text", "") or ""
-                text2 = text2.strip()
-                if text2.startswith("```"):
-                    text2 = re.sub(r"^```(?:json)?\s*", "", text2)
-                    text2 = re.sub(r"\s*```$", "", text2)
-                data2 = json.loads(text2)
-                revised2 = (data2.get("revised") or "").strip()
-                if revised2 and first_line(revised2) != first_line(copy_text):
-                    revised, summary = revised2, (data2.get("summary") or summary or "").strip()
-            except Exception:
-                pass
+        # Single Claude call only (no retry) to stay under Vercel timeout
         return revised, summary, True
     except Exception as e:
         err = str(e).strip() or "Unknown error"

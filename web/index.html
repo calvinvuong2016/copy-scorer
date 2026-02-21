@@ -617,7 +617,10 @@
       showError('');
       setLoading(true);
       const controller = new AbortController();
-      let timeoutId = setTimeout(() => controller.abort(), 90000);
+      let timeoutId = setTimeout(() => controller.abort(), 70000);
+      const waitMsgId = setTimeout(() => {
+        showError('Still rewriting… This can take up to 60 seconds. Please wait.');
+      }, 10000);
       try {
         const res = await fetch('/api/rewrite', {
           method: 'POST',
@@ -626,6 +629,8 @@
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
+        clearTimeout(waitMsgId);
+        showError('');
         if (!res.ok) throw new Error(res.statusText || 'Rewrite failed');
         const { revised, scorer_name, llm_used, summary } = await res.json();
         const ranges = getDiffRanges(copy, revised);
@@ -644,8 +649,9 @@
         compareSection.classList.add('visible');
       } catch (e) {
         clearTimeout(timeoutId);
+        clearTimeout(waitMsgId);
         if (e.name === 'AbortError') {
-          showError('Rewrite timed out (90s). Try again or use shorter copy.');
+          showError('Rewrite timed out (70s). Try again or use shorter copy.');
         } else {
           showError('Could not rewrite. ' + (e.message || ''));
         }

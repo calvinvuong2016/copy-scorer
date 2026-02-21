@@ -374,37 +374,6 @@ ORIGINAL COPY:
         summary = (data.get("summary") or "").strip() or REWRITE_SUMMARIES.get(scorer_id, "Revised to score 90+ for this model.")
         if not revised:
             return None, None, False
-
-        def _first_line(s: str) -> str:
-            return (s or "").strip().split("\n")[0].strip()[:120]
-
-        if _first_line(revised) == _first_line(copy_text):
-            retry_user = f"""Your previous response was invalid: the opening was unchanged. You MUST output a COMPLETE REPLACEMENT. Your first sentence must be DIFFERENT from the original. Rewrite the entire ad from the top in your voice. Return only JSON: {{"revised": "<full revised ad>", "summary": "<one short sentence>"}}.
-
-ORIGINAL COPY:
-{copy_text}"""
-            try:
-                msg2 = client.messages.create(
-                    model="claude-sonnet-4-20250514",
-                    max_tokens=4096,
-                    system=system,
-                    messages=[{"role": "user", "content": retry_user}],
-                )
-                text2 = "".join(
-                    getattr(b, "text", "") or ""
-                    for b in getattr(msg2, "content", [])
-                    if getattr(b, "type", None) == "text"
-                ).strip()
-                if text2.startswith("```"):
-                    text2 = re.sub(r"^```(?:json)?\s*", "", text2)
-                    text2 = re.sub(r"\s*```$", "", text2)
-                data2 = json.loads(text2)
-                revised2 = (data2.get("revised") or "").strip()
-                if revised2 and _first_line(revised2) != _first_line(copy_text):
-                    revised = revised2
-                    summary = (data2.get("summary") or summary or "").strip()
-            except Exception:
-                pass
         return revised, summary, True
     except Exception:
         return None, None, False

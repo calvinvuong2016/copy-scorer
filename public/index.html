@@ -609,7 +609,8 @@
       return parts.join('');
     }
 
-    const REWRITE_TIMEOUT_MS = 90000;
+    const REWRITE_TIMEOUT_MS = 70000;
+    const REWRITE_WAIT_MSG_MS = 10000;
 
     async function rewrite() {
       const copy = (copyInput.value || '').trim();
@@ -622,6 +623,9 @@
       setLoading(true);
       const controller = new AbortController();
       let timeoutId = setTimeout(() => controller.abort(), REWRITE_TIMEOUT_MS);
+      const waitMsgId = setTimeout(() => {
+        showError('Still rewriting… This can take up to 60 seconds. Please wait.');
+      }, REWRITE_WAIT_MSG_MS);
       try {
         const res = await fetch('/api/rewrite', {
           method: 'POST',
@@ -630,6 +634,8 @@
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
+        clearTimeout(waitMsgId);
+        showError('');
         if (!res.ok) throw new Error(res.statusText || 'Rewrite failed');
         const { revised, scorer_name, llm_used, summary } = await res.json();
         const ranges = getDiffRanges(copy, revised);
@@ -648,8 +654,9 @@
         compareSection.classList.add('visible');
       } catch (e) {
         clearTimeout(timeoutId);
+        clearTimeout(waitMsgId);
         if (e.name === 'AbortError') {
-          showError('Rewrite timed out (90s). Try again or use shorter copy. On Vercel, rewrites can take up to a minute.');
+          showError('Rewrite timed out (70s). The server may have timed out. Try again, use shorter copy, or run the app locally for rewrites.');
         } else {
           showError('Could not rewrite. ' + (e.message || ''));
         }

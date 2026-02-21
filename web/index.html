@@ -616,12 +616,16 @@
       const scorerId = rewriteModelSelect.value || 'cw-eugene-schwartz';
       showError('');
       setLoading(true);
+      const controller = new AbortController();
+      let timeoutId = setTimeout(() => controller.abort(), 90000);
       try {
         const res = await fetch('/api/rewrite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ copy, scorer_id: scorerId }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!res.ok) throw new Error(res.statusText || 'Rewrite failed');
         const { revised, scorer_name, llm_used, summary } = await res.json();
         const ranges = getDiffRanges(copy, revised);
@@ -639,7 +643,12 @@
           : 'Original vs Revised (highlighted = changed)';
         compareSection.classList.add('visible');
       } catch (e) {
-        showError('Could not rewrite. ' + (e.message || ''));
+        clearTimeout(timeoutId);
+        if (e.name === 'AbortError') {
+          showError('Rewrite timed out (90s). Try again or use shorter copy.');
+        } else {
+          showError('Could not rewrite. ' + (e.message || ''));
+        }
       } finally {
         setLoading(false);
       }
